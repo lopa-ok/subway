@@ -1,11 +1,13 @@
 let canvas, ctx;
 let player, obstacles;
 let gameSpeed;
-let lanes = 3;
+let lanes = 3; 
+let score = 0;
+let isGameOver = false;
 
 
 let laneWidth;
-let playerLane;
+let playerLane; 
 
 
 function startGame() {
@@ -19,7 +21,11 @@ function startGame() {
     player = new Player();
     obstacles = [];
 
-   
+    
+    score = 0;
+    isGameOver = false;
+
+    
     updateGame();
 }
 
@@ -51,7 +57,7 @@ function Player() {
             this.x -= Math.min(this.dx, this.x - this.targetX);
         }
 
-      
+        
         if (this.x < 0) {
             this.x = 0;
         }
@@ -76,6 +82,17 @@ function Player() {
             }
         }
     };
+
+    this.checkCollision = function(obstacle) {
+        
+        if (this.x < obstacle.x + obstacle.width &&
+            this.x + this.width > obstacle.x &&
+            this.y < obstacle.y + obstacle.height &&
+            this.y + this.height > obstacle.y) {
+            return true;
+        }
+        return false;
+    };
 }
 
 
@@ -94,6 +111,11 @@ function Obstacle() {
 
     this.update = function() {
         this.y += gameSpeed;
+
+        
+        if (player.checkCollision(this)) {
+            gameOver();
+        }
     };
 }
 
@@ -106,11 +128,17 @@ function updateGame() {
     player.draw();
 
     
-    if (Math.random() < 0.01) {
-        obstacles.push(new Obstacle());
+    if (Math.random() < 0.01 && obstacles.length < lanes) {
+        let laneOccupied = obstacles.map(obstacle => obstacle.lane);
+        let freeLanes = Array.from({ length: lanes }, (_, i) => i).filter(lane => !laneOccupied.includes(lane));
+        let laneIndex = Math.floor(Math.random() * freeLanes.length);
+        let newObstacle = new Obstacle();
+        newObstacle.lane = freeLanes[laneIndex];
+        newObstacle.x = laneWidth * newObstacle.lane + laneWidth / 2 - newObstacle.width / 2;
+        obstacles.push(newObstacle);
     }
 
-    
+   
     for (let i = 0; i < obstacles.length; i++) {
         obstacles[i].update();
         obstacles[i].draw();
@@ -122,16 +150,79 @@ function updateGame() {
         }
     }
 
-   
-    requestAnimationFrame(updateGame);
+    
+    ctx.fillStyle = '#000';
+    ctx.font = '24px Arial';
+    ctx.fillText('Score: ' + score, 10, 30);
+
+    
+    if (!isGameOver) {
+        score++;
+    }
+
+    
+    if (!isGameOver) {
+        requestAnimationFrame(updateGame);
+    }
+}
+
+
+function gameOver() {
+    isGameOver = true;
+
+    
+    obstacles = [];
+
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    
+    ctx.fillStyle = '#000';
+    ctx.font = '40px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 40);
+
+    ctx.font = '24px Arial';
+    ctx.fillText('Score: ' + score, canvas.width / 2, canvas.height / 2);
+
+    
+    ctx.fillStyle = '#00f';
+    ctx.fillRect(canvas.width / 2 - 50, canvas.height / 2 + 50, 100, 50);
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Restart', canvas.width / 2, canvas.height / 2 + 85);
+
+    
+    canvas.addEventListener('click', restartGame);
+}
+
+
+function restartGame(event) {
+    let rect = canvas.getBoundingClientRect();
+    let mouseX = event.clientX - rect.left;
+    let mouseY = event.clientY - rect.top;
+
+    
+    if (mouseX >= canvas.width / 2 - 50 && mouseX <= canvas.width / 2 + 50 &&
+        mouseY >= canvas.height / 2 + 50 && mouseY <= canvas.height / 2 + 100) {
+        
+        canvas.removeEventListener('click', restartGame);
+
+       
+        startGame();
+    }
 }
 
 
 document.addEventListener('keydown', function(event) {
-    if (event.key === 'ArrowLeft' || event.key === 'Left') {
-        player.move('left');
-    } else if (event.key === 'ArrowRight' || event.key === 'Right') {
-        player.move('right');
+    if (!isGameOver) {
+        if (event.key === 'ArrowLeft' || event.key === 'Left') {
+            player.move('left');
+        } else if (event.key === 'ArrowRight' || event.key === 'Right') {
+            player.move('right');
+        }
     }
 });
 
