@@ -4,6 +4,7 @@ let gameSpeed;
 let lanes = 3; 
 let score = 0;
 let isGameOver = false;
+let difficulty = 'medium'; 
 
 
 let laneWidth;
@@ -14,7 +15,86 @@ function startGame() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     adjustCanvasSize(); 
-    gameSpeed = 3;
+
+    
+    showMainMenu();
+}
+
+
+function showMainMenu() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+   
+    ctx.fillStyle = '#000';
+    ctx.font = '40px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('subway surfers inspired game', canvas.width / 2, canvas.height / 2 - 80);
+
+    ctx.font = '24px Arial';
+    ctx.fillText('Select Difficulty:', canvas.width / 2, canvas.height / 2 - 40);
+
+   
+    ctx.fillStyle = '#00f';
+    ctx.fillRect(canvas.width / 2 - 100, canvas.height / 2, 200, 50);
+    ctx.fillRect(canvas.width / 2 - 100, canvas.height / 2 + 70, 200, 50);
+    ctx.fillRect(canvas.width / 2 - 100, canvas.height / 2 + 140, 200, 50);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Easy', canvas.width / 2, canvas.height / 2 + 35);
+    ctx.fillText('Medium', canvas.width / 2, canvas.height / 2 + 105);
+    ctx.fillText('Hard', canvas.width / 2, canvas.height / 2 + 175);
+
+    
+    canvas.addEventListener('click', selectDifficulty);
+}
+
+
+function selectDifficulty(event) {
+    let rect = canvas.getBoundingClientRect();
+    let mouseX = event.clientX - rect.left;
+    let mouseY = event.clientY - rect.top;
+
+    
+    if (mouseX >= canvas.width / 2 - 100 && mouseX <= canvas.width / 2 + 100) {
+        if (mouseY >= canvas.height / 2 && mouseY <= canvas.height / 2 + 50) {
+            // Easy difficulty
+            difficulty = 'easy';
+        } else if (mouseY >= canvas.height / 2 + 70 && mouseY <= canvas.height / 2 + 120) {
+            // Medium difficulty
+            difficulty = 'medium';
+        } else if (mouseY >= canvas.height / 2 + 140 && mouseY <= canvas.height / 2 + 190) {
+            // Hard difficulty
+            difficulty = 'hard';
+        }
+
+        
+        canvas.removeEventListener('click', selectDifficulty);
+
+        
+        startGameLoop();
+    }
+}
+
+
+function startGameLoop() {
+    
+    switch (difficulty) {
+        case 'easy':
+            gameSpeed = 4; 
+            break;
+        case 'medium':
+            gameSpeed = 5; 
+            break;
+        case 'hard':
+            gameSpeed = 6; 
+            break;
+        default:
+            gameSpeed = 5; 
+            break;
+    }
+
     laneWidth = canvas.width / lanes;
     playerLane = Math.floor(lanes / 2); 
 
@@ -33,7 +113,6 @@ function startGame() {
 function adjustCanvasSize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    laneWidth = canvas.width / lanes;
 }
 
 
@@ -99,10 +178,10 @@ function Player() {
 function Obstacle() {
     this.width = 50; 
     this.height = 50; 
-    this.lane = Math.floor(Math.random() * lanes); 
+    this.lane = Math.floor(Math.random() * lanes);
     this.x = laneWidth * this.lane + laneWidth / 2 - this.width / 2;
     this.y = -this.height;
-    this.color = '#0f0'; 
+    this.color = '#0f0';
 
     this.draw = function() {
         ctx.fillStyle = this.color;
@@ -150,17 +229,17 @@ function updateGame() {
         }
     }
 
-    
+
     ctx.fillStyle = '#000';
     ctx.font = '24px Arial';
-    ctx.fillText('Score: ' + score, 10, 30);
-
+    ctx.textAlign = 'left'; 
+    ctx.fillText('Score: ' + score, 10, 30); 
     
     if (!isGameOver) {
         score++;
     }
 
-    
+   
     if (!isGameOver) {
         requestAnimationFrame(updateGame);
     }
@@ -170,14 +249,13 @@ function updateGame() {
 function gameOver() {
     isGameOver = true;
 
-    
+    // Clear obstacles array
     obstacles = [];
 
-    
+   
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    
     ctx.fillStyle = '#000';
     ctx.font = '40px Arial';
     ctx.textAlign = 'center';
@@ -186,32 +264,41 @@ function gameOver() {
     ctx.font = '24px Arial';
     ctx.fillText('Score: ' + score, canvas.width / 2, canvas.height / 2);
 
-    
-    ctx.fillStyle = '#00f';
-    ctx.fillRect(canvas.width / 2 - 50, canvas.height / 2 + 50, 100, 50);
-    ctx.fillStyle = '#fff';
-    ctx.font = '20px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Restart', canvas.width / 2, canvas.height / 2 + 85);
 
-    
-    canvas.addEventListener('click', restartGame);
+    ctx.fillStyle = '#00f';
+    ctx.fillRect(canvas.width / 2 - 100, canvas.height / 2 + 50, 200, 50);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('Main Menu', canvas.width / 2, canvas.height / 2 + 85);
+
+   
+    ctx.fillStyle = '#f00';
+    ctx.fillRect(canvas.width / 2 - 100, canvas.height / 2 + 120, 200, 50);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('Restart', canvas.width / 2, canvas.height / 2 + 155);
+
+   
+    canvas.addEventListener('click', handleGameOverClick);
 }
 
 
-function restartGame(event) {
+
+function handleGameOverClick(event) {
     let rect = canvas.getBoundingClientRect();
     let mouseX = event.clientX - rect.left;
     let mouseY = event.clientY - rect.top;
 
-    
-    if (mouseX >= canvas.width / 2 - 50 && mouseX <= canvas.width / 2 + 50 &&
+   
+    if (mouseX >= canvas.width / 2 - 100 && mouseX <= canvas.width / 2 + 100 &&
         mouseY >= canvas.height / 2 + 50 && mouseY <= canvas.height / 2 + 100) {
-        
-        canvas.removeEventListener('click', restartGame);
+        canvas.removeEventListener('click', handleGameOverClick);
+        showMainMenu();
+    }
 
-       
-        startGame();
+
+    if (mouseX >= canvas.width / 2 - 100 && mouseX <= canvas.width / 2 + 100 &&
+        mouseY >= canvas.height / 2 + 120 && mouseY <= canvas.height / 2 + 170) {
+        canvas.removeEventListener('click', handleGameOverClick);
+        startGameLoop();
     }
 }
 
